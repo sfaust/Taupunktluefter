@@ -198,7 +198,8 @@ if (rel == true)
 
 float taupunkt(float t, float r) {
   
-float a, b;
+float a = 0;
+float b = 0;
   
   if (t >= 0) {
     a = 7.5;
