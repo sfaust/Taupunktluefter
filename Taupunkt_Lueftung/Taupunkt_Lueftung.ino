@@ -2,8 +2,9 @@
 #include "DHT.h"
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
-#include <avr/wdt.h>
+#include <esp_task_wdt.h>
 
+#define WDT_TIMEOUT 8
 #define RELAIPIN 6 // Anschluss des Lüfter-Relais
 #define DHTPIN_1 5 // Datenleitung für den DHT-Sensor 1 (innen)
 #define DHTPIN_2 4 // Datenleitung für den DHT-Sensor 2 (außen)
@@ -35,7 +36,8 @@ LiquidCrystal_I2C lcd(0x27,20,4); // LCD: I2C-Addresse und Displaygröße setzen
 bool fehler = true;
 
 void setup() {
-  wdt_enable(WDTO_8S); // Watchdog timer auf 8 Sekunden stellen
+  esp_task_wdt_init(WDT_TIMEOUT, true); //enable panic so ESP32 restarts
+  esp_task_wdt_add(NULL); //add current thread to WDT watch
   
   pinMode(RELAIPIN, OUTPUT);          // Relaispin als Output definieren
   digitalWrite(RELAIPIN, RELAIS_AUS); // Relais ausschalten
@@ -99,7 +101,7 @@ void loop() {
     lcd.print(F("CPU Neustart....."));
     while (1);  // Endlosschleife um das Display zu lesen und die CPU durch den Watchdog neu zu starten
  }
- wdt_reset();  // Watchdog zurücksetzen
+ esp_task_wdt_reset();  // Watchdog zurücksetzen
 
 //**** Taupunkte errechnen********
 float Taupunkt_1 = taupunkt(t1, h1);
@@ -162,7 +164,7 @@ float Taupunkt_2 = taupunkt(t2, h2);
   lcd.write(('C'));
 
 delay(6000); // Zeit um das Display zu lesen
-wdt_reset(); // Watchdog zurücksetzen
+esp_task_wdt_reset(); // Watchdog zurücksetzen
 
   lcd.clear();
   lcd.setCursor(0,0);
@@ -190,7 +192,7 @@ if (rel == true)
  lcd.write('C');
 
  delay(4000);   // Wartezeit zwischen zwei Messungen
- wdt_reset();   // Watchdog zurücksetzen 
+ esp_task_wdt_reset();   // Watchdog zurücksetzen 
  
 }
 
@@ -223,5 +225,5 @@ float a, b;
 
  void software_Reset() // Startet das Programm neu, nicht aber die Sensoren oder das LCD 
   {
-    asm volatile ("  jmp 0");  
+    ESP.restart();
   }
